@@ -10,7 +10,7 @@ const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/
 
 // Register url for post
-const REGISTER_URL = '/register';
+const REGISTER_URL = '/api/v1/register';
 
 const Register = () => {
 
@@ -124,8 +124,17 @@ const Register = () => {
             // If no error response
             if (!err?.response) {
                 setErrMsg('No Server Response');
-            } else if (err.response?.status === 409 || err.response?.status === 400) { // Username or email is taken / All fields required
-                setErrMsg(`${JSON.stringify(err.response.data.message).slice(1, -1)}`);
+            } else if (err.response?.status === 409) {
+                setErrMsg('Email or username already in use');
+            } else if (err.response?.status === 400) {
+                const errorData = err.response.data;
+                if (typeof errorData === 'string') {
+                    setErrMsg(errorData);
+                } else if (errorData.error) {
+                    setErrMsg(errorData.error);
+                } else {
+                    setErrMsg('Invalid entry. Please check all fields.');
+                }
             } else {
                 setErrMsg('Registration Failed');
             }

@@ -1,32 +1,111 @@
 const User = require('../models/User');
+const bcrypt = require('bcrypt');
 const validator = require('validator');
+const { validateProfile } = require('../validators/profileValidator');
+const { asyncHandler, AppError } = require('../utils/errorHandler');
 
-const viewProfile = async (req, res) => {
-    try {
-        const foundUser = await User.findOne({ username: req.params.username });
-        if (!foundUser) return res.status(404).json({ message: 'User not found.' });
+const viewProfile = asyncHandler(async (req, res, next) => {
+    const foundUser = await User.findOne({ username: req.params.username }).select('-password -refreshToken');
+    if (!foundUser) {
+        return next(new AppError('User not found', 404));
+    }
 
-        res.status(200).json({
-            firstName: foundUser.firstName,
-            lastName: foundUser.lastName,
-            name: `${foundUser.firstName} ${foundUser.lastName}`,
-            email: foundUser.email,
-            username: foundUser.username,
-            role: foundUser.role,
-            bio: foundUser.bio,
-            location: foundUser.location,
-            skills: foundUser.skills,
-            avatar: foundUser.avatar,
-            website: foundUser.website,
-            github: foundUser.github,
-            linkedin: foundUser.linkedin,
-            otherWebsite: foundUser.otherWebsite,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: `Server error while fetching profile.` });
-    }
-}
+    res.status(200).json({
+        firstName: foundUser.firstName,
+        lastName: foundUser.lastName,
+        name: `${foundUser.firstName} ${foundUser.lastName}`,
+        email: foundUser.email,
+        username: foundUser.username,
+        role: foundUser.role,
+        bio: foundUser.bio,
+        location: foundUser.location,
+        skills: foundUser.skills,
+        avatar: foundUser.avatar,
+        website: foundUser.website,
+        github: foundUser.github,
+        linkedin: foundUser.linkedin,
+        otherWebsite: foundUser.otherWebsite,
+        createdAt: foundUser.createdAt
+    });
+});
+
+// const updateProfile = asyncHandler(async (req, res, next) => {
+//     const { username: requestedUsername } = req.params;
+//     const userRole = req.user.role;
+//     const userId = req.user.id;
+
+//     const foundUser = await User.findOne({ username: requestedUsername });
+//     if (!foundUser) {
+//         return next(new AppError('User not found', 404));
+//     }
+
+//     // Restrict edit access unless it's your own profile or you are an admin/owner
+//     if (foundUser._id.toString() !== userId && !['admin', 'owner'].includes(userRole)) {
+//         return next(new AppError('You are not authorized to edit this profile', 403));
+//     }
+
+//     // Validate profile fields
+//     const { isValid, errors } = validateProfile(req.body);
+//     if (!isValid) {
+//         return next(new AppError(JSON.stringify(errors), 422));
+//     }
+
+//     const { email, username, firstName, lastName, password, role, bio, location, skills, avatar, website, github, linkedin, otherWebsite } = req.body;
+
+//     // Check for valid role if provided
+//     if (role) {
+//         const VALID_ROLES = ['user', 'moderator', 'admin', 'owner'];
+//         if (!VALID_ROLES.includes(role)) {
+//             return next(new AppError('Invalid role provided', 422));
+//         }
+
+//         if (userRole === 'owner') {
+//             // Full access
+//         } else if (userRole === 'admin') {
+//             if (!['user', 'moderator'].includes(role)) {
+//                 return next(new AppError('Admins can only assign user or moderator roles', 403));
+//             }
+//         } else {
+//             return next(new AppError('You are not authorized to change roles', 403));
+//         }
+//     }
+
+//     // Hash password if updating
+//     const hashedPassword = password ? await bcrypt.hash(password, 10) : foundUser.password;
+
+//     // Update user with new fields (only defined fields)
+//     const updateData = {};
+//     if (email !== undefined) updateData.email = email.toLowerCase();
+//     if (username !== undefined) updateData.username = username.toLowerCase();
+//     if (firstName !== undefined) updateData.firstName = firstName.trim();
+//     if (lastName !== undefined) updateData.lastName = lastName.trim();
+//     if (password !== undefined) updateData.password = hashedPassword;
+//     if (role !== undefined) updateData.role = role;
+//     if (bio !== undefined) updateData.bio = validator.escape(bio.trim());
+//     if (location !== undefined) updateData.location = location.trim();
+//     if (skills !== undefined) updateData.skills = skills;
+//     if (avatar !== undefined) updateData.avatar = avatar.trim();
+//     if (website !== undefined) updateData.website = website.trim();
+//     if (github !== undefined) updateData.github = github.trim();
+//     if (linkedin !== undefined) updateData.linkedin = linkedin.trim();
+//     if (otherWebsite !== undefined) updateData.otherWebsite = otherWebsite.trim();
+
+//     const updatedUser = await User.findOneAndUpdate(
+//         { _id: foundUser._id },
+//         updateData,
+//         { new: true, runValidators: true }
+//     ).select('-password -refreshToken');
+
+//     res.status(200).json({
+//         message: `User ${updatedUser.username} successfully updated`,
+//         user: updatedUser
+//     });
+// });
+
+// module.exports = {
+//     viewProfile,
+//     updateProfile
+// };
 
 const updateProfile = async (req, res) => {
 

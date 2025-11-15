@@ -7,7 +7,7 @@ import useRefreshToken from '../../../auth/useRefreshToken';
 
 
 // Login url for post
-const LOGIN_URL = '/auth';
+const LOGIN_URL = '/api/v1/auth';
 
 const Login = () => {
 
@@ -20,7 +20,7 @@ const Login = () => {
     const from = location.state?.from?.pathname || '/dashboard';
 
     const [formData, setFormData] = useState({
-        login: '',
+        email: '',
         password: '',
     });
 
@@ -51,7 +51,7 @@ const Login = () => {
             setButtonStatus('Loading...');
 
             // Validation to prevent submitting empty entries
-            const v1 = formData.login.trim() !== '';
+            const v1 = formData.email.trim() !== '';
             const v2 = formData.password.trim() !== '';
 
             if (!v1 || !v2) {
@@ -61,7 +61,8 @@ const Login = () => {
             }
 
             const response = await axios.post(LOGIN_URL, {
-                ...formData,
+                email: formData.email.toLowerCase(),
+                password: formData.password,
                 persist
             }, {
                 headers: { 'Content-Type': 'application/json' },
@@ -69,12 +70,11 @@ const Login = () => {
             });
 
             const accessToken = response?.data?.accessToken;
-            const username = response?.data?.user.username;
-            const role = response?.data?.user.role;
+            const username = response?.data?.user?.username;
+            const email = response?.data?.user?.email;
+            const role = response?.data?.user?.role;
 
-            setAuth({ login: formData.login, username, role, accessToken });
-
-            await refresh();
+            setAuth({ email, username, role, accessToken });
 
             navigate(from, { replace: true });
         }
@@ -82,8 +82,8 @@ const Login = () => {
             // If no error response
             if (!err?.response) {
                 setErrMsg('No Server Response');
-            } else if (err.response?.status === 401 || err.response?.status === 400) { // Invalid credentials / All fields required
-                setErrMsg(`${JSON.stringify(err.response.data.message).slice(1, -1)}`);
+            } else if (err.response?.status === 401 || err.response?.status === 400) {
+                setErrMsg(err.response.data.error || 'Invalid email or password');
             } else {
                 setErrMsg('Login Failed');
             }
@@ -123,24 +123,24 @@ const Login = () => {
                             Welcome back! Login to start connecting!
                         </p>
 
-                        {/* Username or Email field */}
+                        {/* Email field */}
                         <div className="form-control mt-6">
                             <label className="label">
-                                <span className="label-text">Username or Email</span>
+                                <span className="label-text">Email</span>
                             </label>
                             <input
                                 ref={loginRef}
                                 onChange={handleChange}
-                                id='login'
-                                type="text"
+                                id='email'
+                                type="email"
                                 autoComplete="off"
-                                placeholder="Enter your username or email address"
+                                placeholder="Enter your email address"
                                 className="input input-bordered"
                                 required
-                                value={formData.login}
+                                value={formData.email}
                             />
                         </div>
-                        {/* End Username or Email Field */}
+                        {/* End Email Field */}
 
 
                         {/* Password Field */}

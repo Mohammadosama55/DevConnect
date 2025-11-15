@@ -128,7 +128,7 @@ const EditProfile = () => {
     }
 
     try {
-      const response = await axiosPrivate.put(`/profile/${username}/edit`,
+      const response = await axiosPrivate.put(`/api/v1/profile/${username}/edit`,
         {
           [field]: formData[field]
         },
@@ -142,7 +142,7 @@ const EditProfile = () => {
       if (!err?.response) {
         setErrMsg('No Server Response');
       } else {
-        setErrMsg(`${JSON.stringify(err.response.data.message).slice(1, -1)}` || 'Update Failed');
+        setErrMsg(err.response.data.error || err.response.data.message || 'Update Failed');
       }
 
       errRef.current.focus();

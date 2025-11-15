@@ -16,7 +16,7 @@ export const ProfileProvider = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axiosPrivate.get(`/profile/${username}`, {
+        const res = await axiosPrivate.get(`/api/v1/profile/${username}`, {
           headers: {
             Authorization: `Bearer ${auth?.accessToken}`
           }
